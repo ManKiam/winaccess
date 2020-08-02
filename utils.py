@@ -56,6 +56,24 @@ def create(payload, params="", window=False, get_exit_code=False):
         return True
 
 
+def access(fp: str):
+    try:
+        assert os.path.exists(fp)
+        open(fp, 'ab')
+        os.rename(fp, fp)
+        return 1
+    except:
+        pass
+
+
+def get_target(val):
+    target = val.split(',')
+    if target[1:] and target[1].count('"') > 1:
+        target = target[1]
+        tar = target.index('"')
+        return target[tar+1:target.index('"', tar+1)]
+
+
 def runas(payload, params=""):
     shinfo = ShellExecuteInfoW()
     shinfo.cbSize = sizeof(shinfo)
@@ -82,6 +100,18 @@ def modify_key(hkey, path, name, value, create=False, key64=False):
         return True
     except Exception as e:
         pass
+
+
+def read_key(hkey, path, name=""):
+    hkey = {"hkcu": winreg.HKEY_CURRENT_USER, "hklm": winreg.HKEY_LOCAL_MACHINE}.get(hkey, hkey)
+    key = winreg.OpenKey(hkey, path, 0, winreg.KEY_ALL_ACCESS)
+    value = None
+    try:
+        value = winreg.QueryValueEx(key, name)[0]
+    except:
+        pass
+    winreg.CloseKey(key)
+    return value
 
 
 def remove_key(hkey, path, name="", delete_key=False, key64=False):
