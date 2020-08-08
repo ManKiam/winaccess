@@ -2,6 +2,8 @@ from .elevate import *
 from .persist import *
 from .uac import *
 
+__version__ = 1
+
 functions = {
     "uac": (
         uac1_info, uac2_info, uac3_info, uac4_info, uac5_info,
