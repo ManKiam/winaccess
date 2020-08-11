@@ -1,8 +1,10 @@
+"""__init__"""
+
 from .elevate import *
 from .persist import *
 from .uac import *
 
-__version__ = 1
+__version__ = 2
 
 functions = {
     "uac": (
