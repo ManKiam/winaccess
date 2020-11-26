@@ -105,13 +105,13 @@ def modify_key(hkey, path, name, value, create=False, key64=False):
 
 def read_key(hkey, path, name=""):
     hkey = {"hkcu": winreg.HKEY_CURRENT_USER, "hklm": winreg.HKEY_LOCAL_MACHINE}.get(hkey, hkey)
-    key = winreg.OpenKey(hkey, path, 0, winreg.KEY_ALL_ACCESS)
     value = ""
     try:
+        key = winreg.OpenKey(hkey, path, 0, winreg.KEY_ALL_ACCESS)
         value = winreg.QueryValueEx(key, name)[0]
+        winreg.CloseKey(key)
     except:
         pass
-    winreg.CloseKey(key)
     return value
 
 

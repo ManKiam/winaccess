@@ -4,7 +4,7 @@ from .elevate import *
 from .persist import *
 from .uac import *
 
-__version__ = 2
+__version__ = 2.1
 
 functions = {
     "uac": (
